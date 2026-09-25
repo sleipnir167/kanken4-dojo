@@ -14,7 +14,7 @@ export const DEFAULT_SETTINGS = {
   newRatio: 0.3,
   examDate: '',
   theme: 'auto',        // auto | light | dark
-  kanaInput: 'hand',    // ひらがなの入力：hand（手書き）| pad（かなパッド）| keyboard
+  kanaInput: 'hand',    // ひらがなの入力：hand（画面幅で自動）| seq（1字ずつ）| pad（かな表）| keyboard
   speech: false,        // 答えを読み上げる
   showGuide: true,      // マス目の十字線
   sheetMode: 'exam',    // 答案用紙モード：exam（模試だけ）| all（練習でも）| off

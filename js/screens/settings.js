@@ -33,7 +33,7 @@ export function renderSettings(root) {
         <div class="set-row"><span>ペンを使ったら指の入力を無視<small>書いているときの手のひらの誤反応を防ぎます</small></span>${tog('autoPalm')}</div>
         <div class="set-row"><span>マス目の十字線<small>答案用紙モードでは表示しません</small></span>${tog('showGuide')}</div>
         <div class="set-row col"><span>答案用紙モード<small>解答欄を本番に近い見た目にし、答え合わせで「とめ・はね・はらい」をチェックします</small></span>${seg('sheetMode', [['exam', '模試だけ'], ['all', '練習でも使う'], ['off', '使わない']])}</div>
-        <div class="set-row"><span>ひらがなの答え方<small>読み・送りがなの問題</small></span>${seg('kanaInput', [['hand', '手書き'], ['pad', 'かなパッド'], ['keyboard', 'キーボード']])}</div>
+        <div class="set-row"><span>ひらがなの答え方<small>読み・送りがなの問題。「自動」はタブレットではマス目、スマホでは1字ずつ大きく書く方式になります</small></span>${seg('kanaInput', [['hand', '手書き（自動）'], ['seq', '手書き（1字ずつ大きく）'], ['pad', 'かな表'], ['keyboard', 'キーボード']])}</div>
       </div>
 
       <div class="card set-group">

@@ -111,6 +111,7 @@ export function renderQuiz(root, params) {
     ans.innerHTML = '';
     ctl = mountAnswer(q, ans, {
       promptEl: $('.qprompt'),
+      onRemount: () => show(),
       onChange: (auto) => {
         $('[data-action="submit"]').disabled = ctl.isEmpty();
         if (auto === true && q.type === 'choice') submit();

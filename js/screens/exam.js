@@ -164,6 +164,7 @@ function runExam(root, ex) {
     $('.qanswer').innerHTML = '';
     ctl = mountAnswer(q, $('.qanswer'), {
       saved: ex.answers[ex.idx], promptEl: $('.qprompt'),
+      onRemount: () => { save(); show(); },
       onChange: (auto) => {
         if (auto === true && q.type === 'choice') { save(); setTimeout(() => { if (qs[ex.idx] === q && ex.idx < qs.length - 1) move(1); }, 320); }
       },

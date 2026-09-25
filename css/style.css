@@ -990,3 +990,41 @@ h3 { font-size: .95rem; margin-top: 6px; }
   .check-card { grid-template-columns: 1fr; }
   .check-pair { grid-row: auto; justify-content: center; }
 }
+
+/* ---------- ひらがな：1字ずつ大きく書く（スマホ向け） ---------- */
+.kana-seq { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; container-type: inline-size; }
+.seq-strip { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; min-height: 48px; }
+.seq-cell {
+  width: 46px; height: 46px; padding: 0; border-radius: 8px; border: 1.5px solid var(--pad-line);
+  background: var(--pad-bg); display: grid; place-items: center; flex: none;
+}
+.seq-cell svg { width: 100%; height: 100%; }
+.seq-cell .ink-thumb path { stroke-width: 16; }
+.seq-cell.cur { border: 2px dashed var(--shu); }
+.seq-pads { display: flex; gap: 10px; justify-content: center; width: 100%; }
+.seq-pads .pad { --size: min(280px, calc((100cqw - 10px) / 2), 38vh); }
+.seq-pads .pad.active { border-color: var(--shu); box-shadow: 0 0 0 4px rgba(217,68,46,.18); }
+.seq-pads .pad:not(.has-ink)::after {
+  content: attr(data-ph); position: absolute; inset: 0; display: grid; place-items: center;
+  color: #c9bfb2; font-weight: 700; font-size: .9rem; pointer-events: none;
+}
+.seq-tools { display: flex; gap: 8px; }
+.kmode-switch { align-self: center; color: var(--muted); }
+.answer.locked .kmode-switch, .answer.locked .seq-tools { visibility: hidden; }
+.answer-sheet .seq-cell { border-radius: 0; border-color: #333; }
+.answer-sheet .seq-pads .pad.active { box-shadow: 0 0 0 4px rgba(0,0,0,.12); }
+/* スマホでは「全部けす」などのボタンを小さく */
+@media (max-width: 600px) {
+  .qactions .btn { min-height: 44px; padding: 0 14px; font-size: .9rem; }
+  .qactions .btn.big { min-height: 50px; padding: 0 20px; }
+  .okuri-box .pad-row .pad { --size: min(220px, 60cqw, 32vh); }
+}
+@media (max-width: 600px) {
+  /* 「全部けす」は各マスの「消」で代わりになるので省き、3つのボタンを1行に */
+  .qactions { flex-wrap: nowrap; gap: 8px; }
+  .qactions [data-action="clear"] { display: none !important; }
+  .qactions .btn { flex: 1 1 auto; padding: 0 10px; }
+  .qactions [data-action="giveup"] { margin-right: 0; }
+  .kana-hint { font-size: .78rem; }
+  .answer-sheet .answer-write::before, .answer-sheet .answer-okuri::before, .answer-sheet .answer-goji::before, .answer-sheet .answer-read::before { display: none; }
+}

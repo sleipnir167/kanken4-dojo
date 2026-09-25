@@ -6,10 +6,11 @@ export const UNIT = 300; // ストロークは 300×300 の座標系で保存す
 let penSeen = false;     // 一度でもペンが使われたら指の入力は無視する（手のひら対策）
 
 export class Pad {
-  constructor({ model = null, showModel = false, onChange = null, onStrokeEnd = null, label = '' } = {}) {
+  constructor({ model = null, showModel = false, onChange = null, onStrokeEnd = null, onStrokeStart = null, label = '' } = {}) {
     this.strokes = [];
     this.onChange = onChange;
     this.onStrokeEnd = onStrokeEnd;
+    this.onStrokeStart = onStrokeStart;
     this.locked = false;
     this.el = document.createElement('div');
     this.el.className = 'pad' + (settings().showGuide ? ' guide' : '');
@@ -76,9 +77,11 @@ export class Pad {
       e.preventDefault();
       active = e.pointerId;
       try { c.setPointerCapture(e.pointerId); } catch { /* 合成イベントなど */ }
+      this.onStrokeStart?.(this);
       const p = pos(e);
       p.push(width(e, p, null));
       this.strokes.push([p]);
+      this.el.classList.add('has-ink');
       this.drawDot(p);
       last = p[2];
     });
@@ -149,6 +152,7 @@ export class Pad {
     ctx.stroke();
   }
   redraw() {
+    this.el.classList.toggle('has-ink', this.strokes.length > 0);
     const ctx = this.ctx;
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);

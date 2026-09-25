@@ -5,7 +5,7 @@ import { createKanaPad, normalizeKana } from './kanapad.js';
 import { judgeChar, judgeKana } from './recognizer.js';
 import { shuffle } from './srs.js';
 import { esc } from './ui.js';
-import { settings } from './store.js';
+import { settings, update as updateStore } from './store.js';
 import { sfx } from './sound.js';
 import { KANJI4 } from '../data/kanji.js';
 
@@ -48,7 +48,7 @@ export const guideText = (q, sheet = false) => (sheet ? SHEET_GUIDE[q.cat] : CAT
 /**
  * @returns コントローラー { el, getAnswer(), isEmpty(), lock(), undo(), clear(), destroy() }
  */
-export function mountAnswer(q, container, { saved = null, onChange = () => {}, promptEl = null } = {}) {
+export function mountAnswer(q, container, { saved = null, onChange = () => {}, promptEl = null, onRemount = null } = {}) {
   const ctl = { pads: [], kpads: [], text: saved?.text || '', choice: saved?.choice ?? null, pick: saved?.pick ?? null, locked: false };
   const area = document.createElement('div');
   area.className = `answer answer-${q.type}`;
@@ -86,20 +86,106 @@ export function mountAnswer(q, container, { saved = null, onChange = () => {}, p
     return wrap;
   };
 
+  // スマホ向け：大きなマス2つに交互に書く。となりのマスに書きはじめると前の字が確定する
+  const kanaSequencer = (n) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'kana-seq';
+    wrap.innerHTML = `
+      <p class="kana-hint">1字ずつ大きく書こう。となりのマスに書きはじめると、前の字が確定するよ</p>
+      <div class="seq-strip" aria-label="書いた字"></div>
+      <div class="seq-pads"></div>
+      <div class="seq-tools"><button type="button" class="mini-btn" data-seq="bs">⌫ 1字けす</button></div>`;
+    const chars = (saved?.kana || []).filter((b) => b && b.length);
+    const strip = wrap.querySelector('.seq-strip');
+    let active = null;
+    const pads = [0, 1].map(() => new Pad({
+      onStrokeStart: (p) => {
+        const other = pads.find((x) => x !== p);
+        if (!other.isEmpty()) commit(other);
+        active = p;
+        pads.forEach((x) => x.el.classList.toggle('active', x === p));
+      },
+      onStrokeEnd: () => sfx.pen(),
+      onChange: () => { renderStrip(); onChange(); },
+    }));
+    pads.forEach((p) => { p.el.dataset.ph = 'ここに書く'; wrap.querySelector('.seq-pads').appendChild(p.el); });
+    const pending = () => {
+      const other = pads.find((x) => x !== active);
+      return [other, active].filter((x) => x && !x.isEmpty());
+    };
+    function commit(p) {
+      chars.push(p.getStrokes());
+      p.clear();
+      renderStrip();
+    }
+    function renderStrip() {
+      const count = Math.max(n, chars.length + 1);
+      strip.innerHTML = Array.from({ length: count }, (_, i) => (i < chars.length
+        ? `<button type="button" class="seq-cell" data-del="${i}" aria-label="${i + 1}字目（タップでけす）">${strokesToSVG(chars[i])}</button>`
+        : `<span class="seq-cell${i === chars.length ? ' cur' : ''}"></span>`)).join('');
+    }
+    const backspace = () => {
+      const p = pending().pop();
+      if (p) p.clear(); else chars.pop();
+      renderStrip();
+      onChange();
+    };
+    wrap.addEventListener('click', (e) => {
+      if (ctl.locked) return;
+      if (e.target.closest('[data-seq="bs"]')) { sfx.tap(); backspace(); }
+      const del = e.target.closest('[data-del]');
+      if (del) { sfx.tap(); chars.splice(Number(del.dataset.del), 1); renderStrip(); onChange(); }
+    });
+    renderStrip();
+    ctl.seqPads = pads;
+    ctl.kanaSeq = {
+      getKana: () => [...chars, ...pending().map((p) => p.getStrokes())],
+      isEmpty: () => !chars.length && !pending().length,
+      clear: () => { chars.length = 0; pads.forEach((p) => p.clear()); renderStrip(); },
+      pop: backspace,
+    };
+    return wrap;
+  };
+
+  // 入力方法のワンタップ切りかえ
+  const switcher = (to, label) => {
+    if (!onRemount) return null;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mini-btn kmode-switch';
+    b.textContent = label;
+    b.addEventListener('click', () => {
+      if (ctl.locked) return;
+      sfx.select();
+      updateStore((st) => { st.settings.kanaInput = to; });
+      onRemount();
+    });
+    return b;
+  };
+
   const kanaBox = (placeholder, boxes) => {
     const mode = settings().kanaInput || 'hand';
-    if (mode === 'hand') return kanaWriter(boxes, placeholder);
+    const narrow = (container.clientWidth || innerWidth) < 600;
+    if (mode === 'seq' || mode === 'hand') {
+      const w = mode === 'seq' || narrow ? kanaSequencer(boxes) : kanaWriter(boxes, placeholder);
+      const sw = switcher('pad', '⌨ かな表で入力');
+      if (sw) w.appendChild(sw);
+      return w;
+    }
     const wrap = document.createElement('div');
     wrap.className = 'kana-input';
+    const sw = switcher('hand', '✍ 手書きで入力');
     const useNative = mode === 'keyboard';
+    const ph = placeholder.split('（')[0]; // 手書き用の説明（かっこ内）は省く
     wrap.innerHTML = useNative
-      ? `<input class="kana-field" lang="ja" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="${placeholder}">`
-      : `<div class="kana-field kana-display" data-ph="${placeholder}"></div>`;
+      ? `<input class="kana-field" lang="ja" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="${ph}">`
+      : `<div class="kana-field kana-display" data-ph="${ph}"></div>`;
     const field = wrap.querySelector('.kana-field');
     const render = () => { if (!useNative) { field.textContent = ctl.text; field.classList.toggle('empty', !ctl.text); } else field.value = ctl.text; };
     if (useNative) field.addEventListener('input', () => { ctl.text = field.value; onChange(); });
     else wrap.appendChild(createKanaPad((fn) => { if (ctl.locked) return; ctl.text = fn(ctl.text).slice(0, 12); render(); onChange(); }));
     render();
+    if (sw) wrap.appendChild(sw);
     ctl.focusText = () => useNative && field.focus();
     return wrap;
   };
@@ -181,9 +267,9 @@ export function mountAnswer(q, container, { saved = null, onChange = () => {}, p
   ctl.getAnswer = () => ({
     text: ctl.text, choice: ctl.choice, pick: ctl.pick, opts: ctl.opts,
     pads: ctl.pads.map((p) => p.getStrokes()),
-    kana: ctl.kpads.length ? ctl.kpads.map((p) => p.getStrokes()) : undefined,
+    kana: ctl.kanaSeq ? ctl.kanaSeq.getKana() : ctl.kpads.length ? ctl.kpads.map((p) => p.getStrokes()) : undefined,
   });
-  const kanaEmpty = () => (ctl.kpads.length ? ctl.kpads.every((p) => p.isEmpty()) : !ctl.text);
+  const kanaEmpty = () => (ctl.kanaSeq ? ctl.kanaSeq.isEmpty() : ctl.kpads.length ? ctl.kpads.every((p) => p.isEmpty()) : !ctl.text);
   ctl.isEmpty = () => {
     if (q.type === 'read') return kanaEmpty();
     if (q.type === 'choice') return ctl.choice == null;
@@ -191,14 +277,14 @@ export function mountAnswer(q, container, { saved = null, onChange = () => {}, p
     if (q.type === 'goji') return ctl.pick == null || ctl.pads[0].isEmpty();
     return ctl.pads.some((p) => p.isEmpty());
   };
-  const allPads = () => [...ctl.pads, ...ctl.kpads];
+  const allPads = () => [...ctl.pads, ...ctl.kpads, ...(ctl.seqPads || [])];
   ctl.lock = () => { ctl.locked = true; allPads().forEach((p) => p.lock()); area.classList.add('locked'); };
   ctl.undo = () => {
     // 最後に書いたパッドの1画を消す
     const last = allPads().filter((p) => !p.isEmpty()).sort((a, b) => lastT(b) - lastT(a))[0];
-    last?.undo();
+    if (last) last.undo(); else ctl.kanaSeq?.pop();
   };
-  ctl.clear = () => allPads().forEach((p) => p.clear());
+  ctl.clear = () => { allPads().forEach((p) => p.clear()); ctl.kanaSeq?.clear(); };
   ctl.destroy = () => { allPads().forEach((p) => p.destroy()); ctl.offPick?.(); };
   ctl.hasPads = allPads().length > 0;
   return ctl;

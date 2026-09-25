@@ -1,5 +1,5 @@
 // Service Worker：アプリ本体をキャッシュしてオフラインでも使えるようにする
-const VERSION = 'kanken4-dojo-v3';
+const VERSION = 'kanken4-dojo-v4';
 const CORE = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
   './js/app.js', './js/bank.js', './js/store.js', './js/srs.js', './js/sound.js', './js/fx.js',
