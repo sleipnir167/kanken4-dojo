@@ -17,6 +17,7 @@ export const DEFAULT_SETTINGS = {
   kanaInput: 'hand',    // ひらがなの入力：hand（手書き）| pad（かなパッド）| keyboard
   speech: false,        // 答えを読み上げる
   showGuide: true,      // マス目の十字線
+  sheetMode: 'exam',    // 答案用紙モード：exam（模試だけ）| all（練習でも）| off
 };
 
 const fresh = () => ({

@@ -10,6 +10,7 @@ import { mascot } from '../mascot.js';
 import { actions, esc, modal, ring, speak, confirmDialog, fmtTime } from '../ui.js';
 import { go, takeTransient } from '../app.js';
 import { openKanji, openStrokeOrder } from './dict.js';
+import { checkPanelHTML, bindCheckToggles } from '../checkpoints.js';
 
 function buildQueue(params) {
   const s = store.get();
@@ -47,9 +48,10 @@ export function renderQuiz(root, params) {
   let ctl = null, pending = null, busy = false;
   const startLv = levelInfo().level;
   const t0 = Date.now();
+  const sheetMode = store.settings().sheetMode === 'all';
 
   root.innerHTML = `
-  <div class="quiz">
+  <div class="quiz${sheetMode ? ' answer-sheet' : ''}">
     <header class="quiz-top">
       <button class="icon-btn" data-action="quit" aria-label="やめる">✕</button>
       <div class="quiz-title">${esc(title)}</div>
@@ -102,8 +104,8 @@ export function renderQuiz(root, params) {
     $('.qhead').innerHTML = `
       <span class="cat-chip"><i>${c.icon}</i>${c.name}</span>
       <span class="qstat s-${stat}">${retry ? 'もう一度！' : STATUS_LABEL[stat]}</span>`;
-    $('.qguide').textContent = guideText(q);
-    $('.qprompt').innerHTML = promptHTML(q);
+    $('.qguide').textContent = guideText(q, sheetMode);
+    $('.qprompt').innerHTML = `${sheetMode ? `<span class="q-no">(${idx + 1})</span>` : ''}${promptHTML(q)}`;
     $('.stamp-layer').innerHTML = '';
     const ans = $('.qanswer');
     ans.innerHTML = '';
@@ -203,14 +205,23 @@ export function renderQuiz(root, params) {
         </div>
         <p class="answer-line">${answerHTML(q)}</p>
         ${!correct && q.type !== 'choice' && !ctl?.hasPads ? `<p class="your-ans">あなたの答え：${esc(userAnswerText(q, ans, res))}</p>` : ''}
-        ${inkCompareHTML(q, ans, res)}
+        ${sheetMode && ans.pads?.some((p) => p.length) ? checkPanelHTML(q, ans, { correct }) + orderLinks(res) : inkCompareHTML(q, ans, res)}
         ${kanaCompareHTML(ans, res)}
+        ${pending.checkedNG ? '<p class="check-ng-note">本番では×になるので、もう一度練習しよう。少しあとでまた出題します。</p>' : ''}
         ${kanjiChips(q)}
         <div class="sheet-actions">
           ${canFlip ? `<button class="btn ghost small" data-action="flip">${correct ? '判定を× に修正' : '正しく書けていた（○に修正）'}</button>` : '<span></span>'}
           <button class="btn primary big" data-action="next">${idx + 1 >= queue.length && (correct || pending.retry) ? '結果を見る' : 'つぎへ'} →</button>
         </div>
       </div>`;
+  }
+
+  // 答案用紙モード：認識結果と書き順ボタンだけを小さく出す
+  function orderLinks(res) {
+    if (!res?.chars?.length) return '';
+    return `<div class="check-extra">${res.chars.map((r) => `
+      <button type="button" class="mini-btn" data-action="order" data-ch="${esc(r.ch)}">「${esc(r.ch)}」の書き順</button>
+      ${r.source === 'google' && r.candidates?.length ? `<span class="ink-note">認識：${r.candidates.slice(0, 3).map(esc).join(' ')}</span>` : ''}`).join('')}</div>`;
   }
 
   function commit() {
@@ -317,6 +328,7 @@ export function renderQuiz(root, params) {
     flip: () => {
       // 手書き判定の修正（認識ミスの救済）
       const p = pending;
+      p.checkedNG = false;
       p.correct = !p.correct;
       combo = p.correct ? p.prev + 1 : 0;
       maxCombo = Math.max(maxCombo, combo);
@@ -326,6 +338,13 @@ export function renderQuiz(root, params) {
       p.correct ? sfx.correct(0) : sfx.wrong();
       renderSheet();
       updateTop();
+    },
+    'chk-ng': () => {
+      // とめ・はね・はらいに直すところがあった → 本番と同じく×にする
+      if (!pending?.correct) return;
+      root._actions.flip();
+      pending.checkedNG = true;
+      renderSheet();
     },
     speak: () => speak(speechText(pending.q)),
     star: () => {
@@ -346,6 +365,7 @@ export function renderQuiz(root, params) {
     if ((e.metaKey || e.ctrlKey) && e.key === 'z') ctl?.undo();
   };
   addEventListener('keydown', onKey);
+  bindCheckToggles(root);
   show();
   return () => { removeEventListener('keydown', onKey); ctl?.destroy(); };
 }

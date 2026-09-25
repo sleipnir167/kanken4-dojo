@@ -1,5 +1,5 @@
 // 問題の表示・解答入力・採点（練習と模擬試験で共通）
-import { CATS, KOUSEI_TYPES, splitTarget } from './bank.js';
+import { CATS, KOUSEI_TYPES, SHEET_GUIDE, splitTarget } from './bank.js';
 import { Pad, strokesToSVG, UNIT } from './pad.js';
 import { createKanaPad, normalizeKana } from './kanapad.js';
 import { judgeChar, judgeKana } from './recognizer.js';
@@ -42,7 +42,7 @@ export function promptHTML(q, view = {}) {
   }
 }
 
-export const guideText = (q) => CATS[q.cat].guide;
+export const guideText = (q, sheet = false) => (sheet ? SHEET_GUIDE[q.cat] : CATS[q.cat].guide);
 
 // ---------- 解答エリア ----------
 /**

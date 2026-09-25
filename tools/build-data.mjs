@@ -44,6 +44,16 @@ for (const row of fs.readFileSync(joyoPath, 'utf8').split('\n')) {
   joyo[k] = { rad, strokes, on, kun };
 }
 
+// KanjiVG の画の種類（CJK Strokes）→ t:とめ h:はね r:はらい d:点
+const HANE = '㇀㇁㇂㇃㇆㇈㇉㇊㇌㇖㇙㇚㇟㇠㇡㇢';
+const HARAI = '㇇㇋㇏㇒㇓㇝';
+function strokeKind(type) {
+  const c = [...type][0] || '';
+  if (HANE.includes(c)) return 'h';
+  if (HARAI.includes(c)) return 'r';
+  if (c === '㇔') return 'd';
+  return 't';
+}
 // ---------- KanjiVG ----------
 const kvgText = fs.readFileSync(kvgPath, 'utf8');
 const kvg = {};
@@ -51,7 +61,10 @@ const kanjiRe = /<kanji id="kvg:kanji_([0-9a-f]{5})">([\s\S]*?)<\/kanji>/g;
 for (let m; (m = kanjiRe.exec(kvgText)); ) {
   const ch = String.fromCodePoint(parseInt(m[1], 16));
   const body = m[2];
-  const paths = [...body.matchAll(/<path [^>]*d="([^"]+)"/g)].map((p) => compactPath(p[1]));
+  const pathTags = [...body.matchAll(/<path [^>]*d="[^"]+"[^>]*\/?>/g)].map((p) => p[0]);
+  const paths = pathTags.map((t) => compactPath(t.match(/ d="([^"]+)"/)[1]));
+  // 画の種類（とめ・はね・はらい）
+  const types = pathTags.map((t) => strokeKind(t.match(/kvg:type="([^"]*)"/)?.[1] || '')).join('');
   // 部首の字形（例: 水 → 氵）
   const forms = {};
   for (const g of body.matchAll(/<g [^>]*kvg:radical="[^"]+"[^>]*>/g)) {
@@ -59,7 +72,7 @@ for (let m; (m = kanjiRe.exec(kvgText)); ) {
     const orig = g[0].match(/kvg:original="([^"]+)"/)?.[1];
     if (el && orig) forms[orig] = el;
   }
-  kvg[ch] = { paths, forms };
+  kvg[ch] = { paths, forms, types };
 }
 function compactPath(d) {
   // 小数点以下1桁に丸めてサイズを削減
@@ -108,6 +121,9 @@ for (const ch of HIRAGANA) if (!kvg[ch]) errors.push(`ひらがなの書き順�
 const strokeChars = [...new Set([...LIST4, ...WRITE_CHARS, ...HIRAGANA])].filter((c) => kvg[c]);
 const strokes = Object.fromEntries(strokeChars.map((c) => [c, kvg[c].paths]));
 fs.writeFileSync('data/strokes.json', JSON.stringify(strokes));
+// 漢字の画の種類（答案用紙モードのチェックポイント用）
+const info = Object.fromEntries(strokeChars.filter((c) => /[\u3400-\u9fff]/.test(c)).map((c) => [c, kvg[c].types]));
+fs.writeFileSync('data/strokeinfo.json', JSON.stringify(info));
 
 const counts = {};
 for (const q of QUESTIONS) counts[q.cat] = (counts[q.cat] || 0) + 1;

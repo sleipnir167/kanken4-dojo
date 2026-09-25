@@ -10,6 +10,7 @@ import { mascot } from '../mascot.js';
 import { actions, esc, confirmDialog, fmtTime } from '../ui.js';
 import { go, onLeave } from '../app.js';
 import { openStrokeOrder } from './dict.js';
+import { openCheckModal } from '../checkpoints.js';
 import { showLevelUp } from './quiz.js';
 
 const MODES = {
@@ -111,9 +112,10 @@ function runExam(root, ex) {
   document.querySelector('.tabbar')?.remove();
   const qs = ex.qids.map((id) => BY_ID[id]).filter(Boolean);
   let ctl = null, timer = null, finished = false;
+  const sheet = store.settings().sheetMode !== 'off';
 
   root.innerHTML = `
-  <div class="exam">
+  <div class="exam${sheet ? ' answer-sheet' : ''}">
     <header class="exam-top">
       <button class="icon-btn" data-action="pause" aria-label="中断">⏸</button>
       <div class="exam-sec"></div>
@@ -157,8 +159,8 @@ function runExam(root, ex) {
     $('.exam-sec').innerHTML = `<b>（${KANSUJI[secNo]}）${c.name}</b><small>${inSec.indexOf(q) + 1} / ${inSec.length}</small>`;
     $('.qcard').style.setProperty('--cat', c.color);
     $('.qhead').innerHTML = `<span class="cat-chip"><i>${c.icon}</i>${c.name}</span><span class="qstat">${c.points}点</span>`;
-    $('.qguide').textContent = guideText(q);
-    $('.qprompt').innerHTML = promptHTML(q, { pick: ex.answers[ex.idx]?.pick });
+    $('.qguide').textContent = guideText(q, sheet);
+    $('.qprompt').innerHTML = `${sheet ? `<span class="q-no">(${inSec.indexOf(q) + 1})</span>` : ''}${promptHTML(q, { pick: ex.answers[ex.idx]?.pick })}`;
     $('.qanswer').innerHTML = '';
     ctl = mountAnswer(q, $('.qanswer'), {
       saved: ex.answers[ex.idx], promptEl: $('.qprompt'),
@@ -317,7 +319,10 @@ function reviewItemHTML(q, i, r, a) {
       ${ink}${kana}
       ${a && !ink && !kana && !r.blank ? `<p class="your-ans">あなたの答え：${esc(userAnswerText(q, a, r))}</p>` : ''}
     </div>
-    ${canFlip ? `<button class="mini-btn" data-action="flip" data-i="${i}">判定を修正</button>` : ''}
+    <div class="rv-btns">
+      ${a?.pads?.some((p) => p?.length) ? `<button class="mini-btn" data-action="check" data-i="${i}">とめ・はね・はらい</button>` : ''}
+      ${canFlip ? `<button class="mini-btn" data-action="flip" data-i="${i}">判定を修正</button>` : ''}
+    </div>
   </div>`;
 }
 
@@ -343,6 +348,7 @@ function reviewListHTML(qs, results, answers, filter) {
   const items = qs.map((q, i) => {
     const r = results[i];
     if (filter === 'wrong' && r.correct === true) return '';
+    if (filter === 'ink' && !answers[i]?.pads?.some((p) => p?.length)) return '';
     return reviewItemHTML(q, i, r, answers[i]);
   }).join('');
   return items || '<p class="muted">まちがえた問題はありません！</p>';
@@ -350,15 +356,18 @@ function reviewListHTML(qs, results, answers, filter) {
 
 function reviewCardHTML(qs, results, answers, filter) {
   const wrong = results.filter((r) => r.correct !== true).length;
+  const ink = answers.filter((a) => a?.pads?.some((p) => p?.length)).length;
   return `<section class="card er-review">
     <div class="er-review-head">
       <h2>答え合わせ</h2>
       <div class="filters">
         <button class="chip ${filter === 'wrong' ? 'on' : ''}" data-action="rvfilter" data-f="wrong">まちがい <small>${wrong}</small></button>
+        <button class="chip ${filter === 'ink' ? 'on' : ''}" data-action="rvfilter" data-f="ink">✍️ 手書き <small>${ink}</small></button>
         <button class="chip ${filter === 'all' ? 'on' : ''}" data-action="rvfilter" data-f="all">すべて <small>${qs.length}</small></button>
       </div>
     </div>
-    <p class="muted small">手書きの判定がおかしいときは「判定を修正」で直せます（得点も直ります）。</p>
+    <p class="muted small">手書きの判定がおかしいときは「判定を修正」で直せます（得点も直ります）。
+      「✍️ 手書き」では、正解した字も「とめ・はね・はらい」をチェックできます。</p>
     <div class="rv-list">${reviewListHTML(qs, results, answers, filter)}</div>
   </section>`;
 }
@@ -456,6 +465,10 @@ function showExamResult(root, ex, qs, results) {
       checkBadges({ exam: calcScore(qs, results).score });
     },
     rvfilter: (tEl) => { sfx.tap(); filter = tEl.dataset.f; render(false); },
+    check: (tEl) => {
+      const i = Number(tEl.dataset.i);
+      openCheckModal(qs[i], answers[i], { correct: results[i].correct === true, onNG: () => root._actions.flip({ dataset: { i: String(i) } }) });
+    },
     order: (tEl) => openStrokeOrder(tEl.dataset.ch),
     practice: (tEl) => go('quiz', { mode: 'cat', cat: tEl.dataset.cat }),
     drill: () => go('quiz', { mode: 'ids', t: Date.now() }, { ids: qs.filter((_, i) => results[i].correct !== true).map((q) => q.id) }),
@@ -505,6 +518,10 @@ function renderExamReview(root, idx) {
   actions(root, {
     back: () => go('exam'),
     rvfilter: (t) => { sfx.tap(); filter = t.dataset.f; render(); },
+    check: (t) => {
+      const i = Number(t.dataset.i);
+      openCheckModal(qs[i], answers[i], { correct: results[i].correct === true, onNG: () => root._actions.flip({ dataset: { i: String(i) } }) });
+    },
     flip: (t) => {
       const i = Number(t.dataset.i);
       results[i].correct = results[i].correct !== true;

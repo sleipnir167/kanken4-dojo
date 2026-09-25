@@ -23,6 +23,19 @@ export const CATS = {
   kaki:       { name: '書き取り',       icon: '書', points: 2, exam: 20, color: '#1f2d4d',
                 guide: 'カタカナを漢字に直そう' },
 };
+// 答案用紙モードで使う、本番ふうの指示文
+export const SHEET_GUIDE = {
+  yomi: '次の――線の漢字の読みをひらがなで記せ。',
+  douon: '次の――線のカタカナにあてはまる漢字をア〜オから一つ選び、記号で記せ。',
+  shikibetsu: '三つの□に共通して入る漢字をア〜オから一つ選び、熟語を作れ。',
+  kousei: '次の熟語の構成はア〜オのどれにあたるか、一つ選び、記号で記せ。',
+  bushu: '次の漢字の部首をア〜エから一つ選び、記号で記せ。',
+  taigi: '（　）のひらがなを漢字に直して□に入れ、対義語・類義語を作れ。',
+  okuri: '次の――線のカタカナを漢字一字と送りがな（ひらがな）に直せ。',
+  yoji: '次の四字熟語のカタカナを漢字一字に直せ。',
+  goji: '次の文にまちがって使われている漢字が一字ある。その字を選び、正しい漢字を記せ。',
+  kaki: '次の――線のカタカナを漢字に直せ。',
+};
 export const CAT_ORDER = ['yomi', 'douon', 'shikibetsu', 'kousei', 'bushu', 'taigi', 'okuri', 'yoji', 'goji', 'kaki'];
 
 export const KOUSEI_TYPES = [

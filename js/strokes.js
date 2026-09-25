@@ -4,15 +4,21 @@ let loading = null;
 
 export function setStrokeData(d) { DATA = d; }
 
+let INFO = {};
+
 export function loadStrokes() {
   if (DATA) return Promise.resolve(DATA);
   if (!loading) {
+    // 画の種類（とめ・はね・はらい）は無くても動くので失敗しても続ける
+    fetch(new URL('../data/strokeinfo.json', import.meta.url)).then((r) => r.json()).then((d) => { INFO = d; }).catch(() => {});
     loading = fetch(new URL('../data/strokes.json', import.meta.url))
       .then((r) => r.json())
       .then((d) => (DATA = d));
   }
   return loading;
 }
+/** 画の種類の文字列（t:とめ h:はね r:はらい d:点）。データが無ければ null */
+export const strokeKinds = (ch) => INFO[ch] || null;
 export const strokePaths = (ch) => DATA?.[ch] || null;
 export const hasStrokes = (ch) => !!DATA?.[ch];
 export const allStrokeChars = () => (DATA ? Object.keys(DATA) : []);

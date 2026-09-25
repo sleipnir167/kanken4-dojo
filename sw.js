@@ -1,13 +1,13 @@
 // Service Worker：アプリ本体をキャッシュしてオフラインでも使えるようにする
-const VERSION = 'kanken4-dojo-v2';
+const VERSION = 'kanken4-dojo-v3';
 const CORE = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
   './js/app.js', './js/bank.js', './js/store.js', './js/srs.js', './js/sound.js', './js/fx.js',
   './js/pad.js', './js/kanapad.js', './js/ui.js', './js/game.js', './js/mascot.js', './js/question.js',
-  './js/recognizer.js', './js/strokes.js', './js/strokeanim.js',
+  './js/recognizer.js', './js/strokes.js', './js/strokeanim.js', './js/checkpoints.js',
   './js/screens/home.js', './js/screens/cats.js', './js/screens/quiz.js', './js/screens/exam.js',
   './js/screens/dict.js', './js/screens/stats.js', './js/screens/settings.js',
-  './data/questions.js', './data/kanji.js', './data/strokes.json',
+  './data/questions.js', './data/kanji.js', './data/strokes.json', './data/strokeinfo.json',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
 ];
 

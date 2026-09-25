@@ -31,7 +31,8 @@ export function renderSettings(root) {
         <div class="set-row"><span>判定のきびしさ</span>${seg('strict', Object.entries(STRICTNESS).map(([k, v]) => [k, v.label]))}</div>
         <div class="set-row"><span>Apple Pencil だけで書く<small>指やてのひらでは書けなくなります</small></span>${tog('pencilOnly')}</div>
         <div class="set-row"><span>ペンを使ったら指の入力を無視<small>書いているときの手のひらの誤反応を防ぎます</small></span>${tog('autoPalm')}</div>
-        <div class="set-row"><span>マス目の十字線</span>${tog('showGuide')}</div>
+        <div class="set-row"><span>マス目の十字線<small>答案用紙モードでは表示しません</small></span>${tog('showGuide')}</div>
+        <div class="set-row col"><span>答案用紙モード<small>解答欄を本番に近い見た目にし、答え合わせで「とめ・はね・はらい」をチェックします</small></span>${seg('sheetMode', [['exam', '模試だけ'], ['all', '練習でも使う'], ['off', '使わない']])}</div>
         <div class="set-row"><span>ひらがなの答え方<small>読み・送りがなの問題</small></span>${seg('kanaInput', [['hand', '手書き'], ['pad', 'かなパッド'], ['keyboard', 'キーボード']])}</div>
       </div>
 

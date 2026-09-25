@@ -893,3 +893,100 @@ h3 { font-size: .95rem; margin-top: 6px; }
   .exam-list li { grid-template-columns: 56px 1fr auto; }
   .el-mode, .el-wrong { display: none; }
 }
+
+/* ---------- 答案用紙モード（本番に近い解答欄） ---------- */
+.answer-sheet .qcard {
+  background: #fffffd; color: #222; border-radius: 4px; border: 1px solid #c9c4b8; border-top: 1px solid #c9c4b8;
+  box-shadow: 0 1px 2px rgba(0,0,0,.1), 0 8px 20px -14px rgba(0,0,0,.35);
+}
+.answer-sheet .qcard.enter { animation: none; }
+.answer-sheet .cat-chip { color: #555; }
+.answer-sheet .cat-chip i { background: #444; }
+.answer-sheet .qstat { background: #fff; color: #666; border-color: #ccc; }
+.answer-sheet .qguide { font-family: var(--kanji); font-size: 1.05rem; font-weight: 600; color: #222; border-bottom: 1px solid #d8d2c4; padding-bottom: 8px; }
+.q-no { font-family: var(--kanji); font-weight: 600; font-size: 1.3rem; color: #333; margin-right: .6em; align-self: center; flex: none; }
+.answer-sheet .q-sentence, .answer-sheet .q-big, .answer-sheet .q-words, .answer-sheet .q-pair { color: #222; }
+.answer-sheet .bousen { background: none; color: #222; }
+.answer-sheet .bousen::after { height: 2px; background: #222; }
+.answer-sheet .bousen.kata { color: #222; }
+.answer-sheet .blank, .answer-sheet .q-pair .blank small, .answer-sheet .q-yoji .blank small { color: #222; }
+.answer-sheet .q-yoji span { background: #fff; border: 1.5px solid #333; border-radius: 2px; color: #222; }
+.answer-sheet .q-yoji .blank { border: 1.5px solid #333; background: #fff; }
+.answer-sheet .q-bushu { border: 1.5px solid #333; border-radius: 2px; }
+.answer-sheet .goji-ch { box-shadow: none; }
+.answer-sheet .goji-ch.picked { background: #fff3c4; color: #222; outline: 2px solid #333; }
+.answer-sheet .combo { display: none; }
+/* 解答欄：1つの長方形の中を点線で区切る */
+.answer-sheet .answer-write::before, .answer-sheet .answer-okuri::before, .answer-sheet .answer-goji::before, .answer-sheet .answer-read::before {
+  content: '解 答 欄'; font-size: .72rem; font-weight: 700; color: #777; letter-spacing: .2em;
+}
+.answer-sheet .pad-row { gap: 0; }
+.answer-sheet .pad {
+  background: #fff; border: 1.5px solid #333; border-radius: 0; box-shadow: none; --pad-line: #333;
+}
+.answer-sheet .pad.guide { background-image: none; }
+.answer-sheet .pad-row .pad + .pad { border-left: 1px dashed #9a9a9a; }
+.answer-sheet .pad canvas { border-radius: 0; }
+.answer-sheet .pad-clear { background: rgba(0,0,0,.05); color: #888; }
+.answer-sheet .pad-label { color: #777; }
+.answer-sheet .pad[data-mark="ok"] { border-color: #333; box-shadow: 0 0 0 4px rgba(79,154,60,.3); }
+.answer-sheet .pad[data-mark="ng"] { border-color: #333; box-shadow: 0 0 0 4px rgba(59,111,209,.25); }
+.answer-sheet .kana-row { gap: 0; }
+.answer-sheet .kana-row .pad { border-radius: 0; }
+.answer-sheet .choice { background: #fff; color: #222; border: 1.5px solid #333; border-radius: 4px; box-shadow: none; }
+.answer-sheet .choice small { color: #333; font-size: .9rem; }
+.answer-sheet .choice.selected { background: #fff3c4; border-color: #333; }
+.answer-sheet .kousei-choice b { color: #222; }
+.answer-sheet .kana-field { border: 1.5px solid #333; border-radius: 0; }
+.quiz.answer-sheet .sheet { max-height: 76vh; }
+
+/* ---------- とめ・はね・はらい チェック ---------- */
+.check-panel { margin: 8px 0 12px; padding: 14px; border-radius: 16px; background: var(--card-2); border: 1px solid var(--line); }
+.check-title { margin: 0 0 10px; font-weight: 900; }
+.check-title small { display: block; font-weight: 500; color: var(--muted); font-size: .78rem; }
+.check-cards { display: flex; flex-direction: column; gap: 14px; }
+.check-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; align-items: start; }
+.check-pair { display: flex; gap: 8px; grid-row: span 2; }
+.check-pair figure {
+  position: relative; margin: 0; width: clamp(110px, 15vw, 150px); aspect-ratio: 1; flex: none;
+  background: #fffefa; border: 2px solid var(--pad-line); border-radius: 12px; display: grid; place-items: center;
+}
+.check-pair figure svg { width: 100%; height: 100%; }
+.check-pair figcaption {
+  position: absolute; bottom: 0; left: 50%; transform: translate(-50%, 50%); font-size: .68rem; font-weight: 900;
+  color: var(--muted); background: var(--card-2); padding: 0 6px; border-radius: 8px; white-space: nowrap;
+}
+.kind-model path { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.kind-model path.k-tome, .kind-model path.k-ten { stroke: #2a2622; }
+.kind-model path.k-hane { stroke: #2c6fd6; }
+.kind-model path.k-harai { stroke: #e0772a; }
+.kind-model circle.end { opacity: .35; }
+.kind-model circle.k-hane { fill: #2c6fd6; }
+.kind-model circle.k-harai { fill: #e0772a; }
+.kind-fallback { font-family: var(--kanji); font-size: 4rem; color: #1c1a18; }
+.check-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: .78rem; font-weight: 700; }
+.check-legend .lg::before { content: ''; display: inline-block; width: 12px; height: 4px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.check-legend .lg.k-hane::before { background: #2c6fd6; }
+.check-legend .lg.k-harai::before { background: #e0772a; }
+.check-legend .lg.k-tome::before { background: #2a2622; }
+:root[data-theme="dark"] .check-legend .lg.k-tome::before { background: #ddd; }
+.check-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.check-row {
+  width: 100%; min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 6px 12px; text-align: left;
+  border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); font-size: .92rem; font-weight: 700;
+  transition: background .15s, border-color .15s;
+}
+.check-row b { color: var(--shu); }
+.cbox { width: 26px; height: 26px; flex: none; border-radius: 7px; border: 2px solid var(--muted); display: grid; place-items: center; }
+.check-row.on { border-color: var(--matcha); background: var(--matcha-soft); }
+.check-row.on .cbox { background: var(--matcha); border-color: var(--matcha); }
+.check-row.on .cbox::after { content: '✓'; color: #fff; font-weight: 900; font-size: .95rem; }
+.check-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+.check-extra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 8px; }
+.check-ng-note { margin: 0 0 8px; color: #3b6fd1; font-weight: 700; }
+.check-modal h2 { margin-bottom: 6px; }
+.rv-btns { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+@media (max-width: 700px) {
+  .check-card { grid-template-columns: 1fr; }
+  .check-pair { grid-row: auto; justify-content: center; }
+}
