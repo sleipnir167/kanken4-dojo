@@ -1,0 +1,10 @@
+{
+  "name": "kanken4-dojo",
+  "private": true,
+  "type": "module",
+  "description": "漢字検定4級の手書き学習PWA",
+  "scripts": {
+    "start": "python3 -m http.server 8765",
+    "build-data": "node tools/build-data.mjs"
+  }
+}

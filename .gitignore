@@ -1,0 +1,6 @@
+.claude/
+.DS_Store
+*.xml
+*.xml.gz
+joyo.txt
+node_modules/
